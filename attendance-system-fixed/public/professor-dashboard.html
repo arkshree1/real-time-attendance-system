@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Professor Dashboard</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
+
+    label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #34495e;
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    td {
+      border-bottom: 1px solid #eee;
+    }
+
+    td:nth-child(2) {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Live Attendance Dashboard</h1>
+
+  <div style="text-align: center;">
+    <label for="classId">Class ID:</label>
+    <input type="text" id="classId" placeholder="Enter Class ID" />
+    <button id="subscribeBtn">Subscribe</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Student Name</th>
+        <th>Class ID</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody id="attendance-table"></tbody>
+  </table>
+
+  <script>
+    const socket = io('http://localhost:3000/attendance', {
+      reconnection: true,
+      reconnectionDelay: 1000
+    });
+
+    let currentClassId = '';
+
+    socket.on('attendanceUpdate', (data) => {
+      socket.on('subscribed', (msg) => {
+        console.log('SUBSCRIBED EVENT RECEIVED:', msg);
+      });
+
+      console.log("RAW DATA RECEIVED:", data);
+
+      const row = `
+        <tr>
+          <td>${data.studentId}</td>
+          <td>${data.studentName || 'MISSING_NAME'}</td>
+          <td>${data.classId}</td>
+          <td>${new Date(data.timestamp).toLocaleString()}</td>
+        </tr>
+      `;
+      document.getElementById('attendance-table').insertAdjacentHTML('afterbegin', row);
+    });
+
+    document.getElementById('subscribeBtn').addEventListener('click', () => {
+      const classId = document.getElementById('classId').value.trim();
+      if (!classId) return alert('Please enter a Class ID');
+
+      if (currentClassId) {
+        socket.emit('leaveClass', { classId: currentClassId });
+      }
+
+      currentClassId = classId;
+      socket.emit('subscribeToClass', { classId });
+      console.log(`Subscribed to ${classId}`);
+    });
+
+    socket.on('connect', () => console.log('Connected to server'));
+    socket.on('error', (err) => console.error('Error:', err));
+  </script>
+</body>
+</html>

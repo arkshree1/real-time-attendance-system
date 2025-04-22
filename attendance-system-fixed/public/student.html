@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Attendance</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background: #1e90ff;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #0066cc;
+    }
+
+    #status {
+      margin-top: 15px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Student: Mark Attendance</h2>
+  <label for="studentId">Student ID</label>
+  <input type="text" id="studentId" placeholder="e.g. S123" />
+
+  <label for="studentName">Student Name</label>
+  <input type="text" id="studentName" placeholder="e.g. Alice" />
+
+  <label for="classId">Class ID</label>
+  <input type="text" id="classId" placeholder="e.g. CS101" />
+
+  <button onclick="markAttendance()">Mark Attendance</button>
+
+  <div id="status"></div>
+
+  <script>
+    const socket = io('http://localhost:3000/attendance');
+
+    function markAttendance() {
+      const studentId = document.getElementById('studentId').value;
+      const studentName = document.getElementById('studentName').value;
+      const classId = document.getElementById('classId').value;
+
+      if (!studentId || !classId || !studentName) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      socket.emit('join_class', { classId, studentId, studentName });
+
+      document.getElementById('status').innerText =
+        'Attendance marked for ' + studentName;
+    }
+  </script>
+</body>
+</html>

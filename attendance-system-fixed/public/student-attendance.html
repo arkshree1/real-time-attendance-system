@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Attendance</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f6fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #34495e;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 25px;
+      padding: 12px;
+      width: 100%;
+      background: #3498db;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    #status {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+      color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Student: Mark Attendance</h2>
+
+    <label for="studentId">Student ID</label>
+    <input type="text" id="studentId" placeholder="e.g. S123" />
+
+    <label for="studentName">Student Name</label>
+    <input type="text" id="studentName" placeholder="e.g. Alice" />
+
+    <label for="classId">Class ID</label>
+    <input type="text" id="classId" placeholder="e.g. CS101" />
+
+    <button onclick="markAttendance()">Mark Attendance</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const socket = io('http://localhost:3000/attendance', {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      reconnection: true
+    });
+
+    function markAttendance() {
+      const studentId = document.getElementById('studentId').value;
+      const studentName = document.getElementById('studentName').value;
+      const classId = document.getElementById('classId').value;
+
+      if (!studentId || !classId || !studentName) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      socket.emit('markAttendance', { 
+        classId, 
+        studentId, 
+        studentName,
+        present: true 
+      });
+
+      console.log('SENDING:', { classId, studentId, studentName });
+
+      document.getElementById('status').innerText = 
+        `Attendance marked for ${studentName}`;
+    }
+
+    socket.on('acknowledge', (data) => {
+      console.log('Server acknowledged:', data);
+    });
+
+    socket.on('error', (err) => {
+      console.error('Error:', err);
+      document.getElementById('status').innerText = 
+        `Error: ${err.message}`;
+    });
+  </script>
+</body>
+</html>

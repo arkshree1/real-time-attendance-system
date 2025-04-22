@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Attendance Test Client</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Live Attendance Test Client</h1>
+
+  <label>Class ID: <input type="text" id="classId"></label><br><br>
+  <label>Student ID: <input type="text" id="studentId"></label><br><br>
+  <label>Status:
+    <select id="statusSelect">
+      <option value="true">Present</option>
+      <option value="false">Absent</option>
+    </select>
+  </label><br><br>
+
+  <button id="subscribeBtn">Subscribe to Class</button>
+  <button id="markBtn">Mark Attendance</button>
+
+  <pre id="log" style="background: #eee; padding: 10px; margin-top: 20px;"></pre>
+
+  <script>
+    const socket = io('http://localhost:3000/attendance', {
+      transports: ['websocket']
+    });
+
+    const log = document.getElementById('log');
+    const subscribeBtn = document.getElementById('subscribeBtn');
+    const markBtn = document.getElementById('markBtn');
+
+    function logMessage(msg) {
+      const ts = new Date().toLocaleTimeString();
+      log.textContent += `[${ts}] ${msg}\n`;
+    }
+
+    socket.on('connect', () => logMessage('Connected to server'));
+    socket.on('attendanceUpdate', data => logMessage(`Attendance Update: ${JSON.stringify(data)}`));
+    socket.on('subscribed', msg => logMessage(msg));
+    socket.on('error', err => logMessage('Error: ' + err));
+
+    subscribeBtn.addEventListener('click', () => {
+      const classId = document.getElementById('classId').value.trim();
+      if (!classId) return logMessage('Please enter a Class ID');
+      socket.emit('subscribeToClass', { classId });
+    });
+
+    markBtn.addEventListener('click', () => {
+      const classId = document.getElementById('classId').value.trim();
+      const studentId = document.getElementById('studentId').value.trim();
+      const present = document.getElementById('statusSelect').value === 'true';
+
+      if (!classId || !studentId) return logMessage('Missing Class ID or Student ID');
+      const studentName = 'Student ' + studentId;
+
+      socket.emit('markAttendance', {
+        classId,
+        studentId,
+        studentName,
+        present
+      });
+    });
+  </script>
+</body>
+</html>
